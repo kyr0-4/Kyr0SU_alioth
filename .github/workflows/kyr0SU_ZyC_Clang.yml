@@ -1,0 +1,125 @@
+name: Build Kernel kyr0SU for Alioth (EmanuelCN_kernel+KernelSU+ZyC Clang)
+
+on: 
+  schedule:
+    - cron:  '20 22 * * 1,3,5'
+  workflow_dispatch:
+
+  
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Setup build kernel environment
+      run: |
+        sudo apt-get update
+        sudo apt-get install libncurses-dev libtinfo5 git ccache automake flex lzop bison gperf build-essential zip curl zlib1g-dev g++-multilib libxml2-utils bzip2 libbz2-dev libbz2-1.0 libghc-bzlib-dev squashfs-tools pngcrush schedtool dpkg-dev liblz4-tool make optipng maven libssl-dev pwgen libswitch-perl policycoreutils minicom libxml-sax-base-perl libxml-simple-perl bc libc6-dev libc6-dev-i386 lib32ncurses5-dev libx11-dev lib32z-dev libgl1-mesa-dev xsltproc unzip device-tree-compiler python2 python3
+
+    - name: Checkout Kernel Source Code
+      uses: actions/checkout@v3
+      with:
+        github-server-url: 'https://github.com'
+        repository: EmanuelCN/kernel_xiaomi_sm8250
+        ref: staging
+        path: android-kernel
+        
+    - name: Checkout AnyKernel
+      uses: actions/checkout@v3
+      with:
+        github-server-url: 'https://github.com'
+        repository: kyr0-4/kyr0SU
+        ref: main
+        path: anykernel
+
+    - name: Download Compiler - ZyCromerZ
+      run: |
+        mkdir clang
+        wget https://raw.githubusercontent.com/ZyCromerZ/Clang/main/Clang-main-link.txt
+        LINK=$(cat 'Clang-main-link.txt')
+        wget -q ${LINK} -O clang.tar.gz
+        tar -C clang/ -zxf clang.tar.gz
+
+    - name: Variables
+      run: |
+        echo "KERNEL_DIR=$GITHUB_WORKSPACE/android-kernel" >> $GITHUB_ENV
+        echo "CLANG_DIR=$GITHUB_WORKSPACE/clang/bin" >> $GITHUB_ENV
+        echo "GCC_ARM64_DIR=$GITHUB_WORKSPACE/arm-gnu-toolchain-12.2.rel1-x86_64-aarch64-none-linux-gnu/bin" >> $GITHUB_ENV
+        echo "GCC_ARM_DIR=$GITHUB_WORKSPACE/arm-gnu-toolchain-12.2.rel1-x86_64-arm-none-linux-gnueabihf/bin" >> $GITHUB_ENV
+        echo "ZIMAGE_DIR=$GITHUB_WORKSPACE/android-kernel/out/arch/arm64/boot" >> $GITHUB_ENV
+        echo "ANYKERNEL_DIR=$GITHUB_WORKSPACE/anykernel/anykernel" >> $GITHUB_ENV
+        TIME=$(TZ=America/Mexico_City date "+%Y%m%d%H%M")
+        DEVICE=alioth
+        ZIPNAME=Kyr0SU
+        echo "FINAL_ZIP=${ZIPNAME}-${DEVICE}-KERNEL-AOSP-${TIME}" >> $GITHUB_ENV
+        sed -i 's/CONFIG_LOCALVERSION="-N0kernel"/CONFIG_LOCALVERSION="-Kyr0SU-EmanuelCN"/g' "android-kernel/arch/arm64/configs/vendor/alioth_defconfig"
+
+    - name: Apply KernelSU
+      run: |
+        cd android-kernel
+        curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -
+        wget -q "https://raw.githubusercontent.com/CHIZI-0618/RK-KernelSU_Action/main/KernelSU.patch" -O KernelSU.patch
+        git apply ./KernelSU.patch
+
+    - name: Build kernel
+      run: |
+        cd android-kernel
+        KERNEL_DEFCONFIG=vendor/alioth_defconfig
+        ARCH=arm64
+        SUBARCH=arm64
+        make O=out clean
+        make O=out ARCH=arm64 CC=${{ env.CLANG_DIR }}/clang $KERNEL_DEFCONFIG
+        make -j$(nproc --all) \
+                      O=out \
+                      ARCH=arm64 \
+                      CC=${{ env.CLANG_DIR }}/clang \
+                      CLANG_TRIPLE=${{ env.CLANG_DIR }}/aarch64-linux-gnu- \
+                      CROSS_COMPILE=${{ env.CLANG_DIR }}/aarch64-linux-gnu- \
+                      CROSS_COMPILE_COMPAT=${{ env.CLANG_DIR }}/arm-linux-gnueabi- \
+                      LD=${{ env.CLANG_DIR }}/ld.lld \
+                      AR=${{ env.CLANG_DIR }}/llvm-ar \
+                      NM=${{ env.CLANG_DIR }}/llvm-nm \
+                      STRIP=${{ env.CLANG_DIR }}/llvm-strip \
+                      OBJCOPY=${{ env.CLANG_DIR }}/llvm-objcopy \
+                      OBJDUMP=${{ env.CLANG_DIR }}/llvm-objdump \
+                      READELF=${{ env.CLANG_DIR }}/llvm-readelf \
+                      HOSTCC=${{ env.CLANG_DIR }}/clang \
+                      HOSTCXX=${{ env.CLANG_DIR }}/clang++ \
+                      HOSTAR=${{ env.CLANG_DIR }}/llvm-ar \
+                      HOSTLD=${{ env.CLANG_DIR }}/ld.lld \
+                      LLVM=1 \
+                      LLVM_IAS=1
+
+    - name: generate dtb
+      run: |
+        find ${{ env.KERNEL_DIR }}/out/arch/arm64/boot/dts/vendor/qcom -name '*.dtb' -exec cat {} + >${{ env.KERNEL_DIR }}/out/arch/arm64/boot/dtb
+
+    - name: Upload the kernel image
+      uses: actions/upload-artifact@v3
+      with:
+        name: Image.gz
+        path: ${{ env.ZIMAGE_DIR }}/Image.gz
+
+    - name: Upload DTBO image
+      uses: actions/upload-artifact@v3
+      with:
+        name: dtbo
+        path: ${{ env.ZIMAGE_DIR }}/dtbo.img
+
+    - name: Upload DTB image
+      uses: actions/upload-artifact@v3
+      with:
+        name: dtb
+        path: ${{ env.ZIMAGE_DIR }}/dtb
+
+    - name: Make Anykernel for the kernel
+      run: |
+        cp -fp ${{ env.ZIMAGE_DIR }}/Image.gz ${{ env.ANYKERNEL_DIR }}
+        cp -fp ${{ env.ZIMAGE_DIR }}/dtbo.img ${{ env.ANYKERNEL_DIR }}
+        cp -fp ${{ env.ZIMAGE_DIR }}/dtb ${{ env.ANYKERNEL_DIR }}
+        
+    - name: Upload AnyKernel zip
+      uses: actions/upload-artifact@v3
+      with:
+        name: ${{ env.FINAL_ZIP}}
+        path: ${{ env.ANYKERNEL_DIR }}
