@@ -23,22 +23,6 @@ jobs:
         repository: EmanuelCN/kernel_xiaomi_sm8250
         ref: staging
         path: android-kernel
-
-    - name: Checkout GCC-ARM64
-      uses: actions/checkout@v3
-      with:
-        github-server-url: 'https://github.com'
-        repository: PixelExperience/prebuilts_gcc_linux-x86_aarch64_aarch64-linux-android-4.9
-        ref: thirteen
-        path: gcc-arm64
-
-    - name: Checkout GCC-ARM
-      uses: actions/checkout@v3
-      with:
-        github-server-url: 'https://github.com'
-        repository: PixelExperience/prebuilts_gcc_linux-x86_arm_arm-linux-androideabi-4.9
-        ref: thirteen
-        path: gcc-arm
         
     - name: Checkout AnyKernel
       uses: actions/checkout@v3
@@ -47,7 +31,17 @@ jobs:
         repository: kyr0-4/kyr0SU
         ref: main
         path: anykernel
-        
+
+    - name: Download Compiler - Arm GNU Toolchain
+      run: |
+        wget -q https://developer.arm.com/-/media/Files/downloads/gnu/12.2.rel1/binrel/arm-gnu-toolchain-12.2.rel1-x86_64-aarch64_be-none-linux-gnu.tar.xz -O gcc-arm64.tar.xz
+        tar -xf gcc-arm64.tar.xz
+
+    - name: Download Compiler - Arm GNU Toolchain
+      run: |
+        wget -q https://developer.arm.com/-/media/Files/downloads/gnu/12.2.rel1/binrel/arm-gnu-toolchain-12.2.rel1-x86_64-arm-none-linux-gnueabihf.tar.xz -O gcc-arm.tar.xz
+        tar -xf gcc-arm.tar.xz
+
     - name: Download Compiler - Snapdragon LLVM
       run: |
         git clone --depth=1 --branch aosp-13 https://gitlab.com/VoidUI/snapdragon-clang.git
@@ -56,8 +50,8 @@ jobs:
       run: |
         echo "KERNEL_DIR=$GITHUB_WORKSPACE/android-kernel" >> $GITHUB_ENV
         echo "CLANG_DIR=$GITHUB_WORKSPACE/snapdragon-clang/bin" >> $GITHUB_ENV
-        echo "GCC_ARM64_DIR=$GITHUB_WORKSPACE/gcc-arm64/bin" >> $GITHUB_ENV
-        echo "GCC_ARM_DIR=$GITHUB_WORKSPACE/gcc-arm/bin" >> $GITHUB_ENV
+        echo "GCC_ARM64_DIR=$GITHUB_WORKSPACE/arm-gnu-toolchain-12.2.rel1-x86_64-aarch64-none-linux-gnu/bin" >> $GITHUB_ENV
+        echo "GCC_ARM_DIR=$GITHUB_WORKSPACE/arm-gnu-toolchain-12.2.rel1-x86_64-arm-none-linux-gnueabihf/bin" >> $GITHUB_ENV
         echo "ZIMAGE_DIR=$GITHUB_WORKSPACE/android-kernel/out/arch/arm64/boot" >> $GITHUB_ENV
         echo "ANYKERNEL_DIR=$GITHUB_WORKSPACE/anykernel/anykernel" >> $GITHUB_ENV
         TIME=$(TZ=America/Mexico_City date "+%Y%m%d%H%M")
@@ -82,14 +76,15 @@ jobs:
         KERNEL_DEFCONFIG=vendor/alioth_defconfig
         ARCH=arm64
         SUBARCH=arm64
+        make O=out clean
         make O=out ARCH=arm64 CC=${{ env.CLANG_DIR }}/clang $KERNEL_DEFCONFIG
         make -j$(nproc --all) \
                       O=out \
                       ARCH=arm64 \
                       CC=${{ env.CLANG_DIR }}/clang \
-                      CLANG_TRIPLE=${{ env.GCC_ARM64_DIR }}/aarch64-linux-gnu- \
-                      CROSS_COMPILE=${{ env.GCC_ARM64_DIR }}/aarch64-linux-android- \
-                      CROSS_COMPILE_ARM32=${{ env.GCC_ARM_DIR }}/arm-linux-androideabi- \
+                      CLANG_TRIPLE=${{ env.GCC_ARM64_DIR }}/aarch64-none-linux-gnu- \
+                      CROSS_COMPILE=${{ env.GCC_ARM64_DIR }}/aarch64-none-linux-gnu- \
+                      CROSS_COMPILE_COMPAT=${{ env.GCC_ARM_DIR }}/arm-none-linux-gnueabihf- \
                       LD=${{ env.CLANG_DIR }}/ld.lld \
                       AR=${{ env.CLANG_DIR }}/llvm-ar \
                       NM=${{ env.CLANG_DIR }}/llvm-nm \
