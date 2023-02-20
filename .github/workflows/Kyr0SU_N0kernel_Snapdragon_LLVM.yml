@@ -1,4 +1,4 @@
-name: Build Kernel kyr0SU for Alioth (EmanuelCN_kernel+KernelSU+Snapdragon LLVM 16.0.3)
+name: kyr0SU for Alioth (N0kernel_kernel+KernelSU+Snapdragon LLVM 16.0.3)
 
 on: 
   schedule:
