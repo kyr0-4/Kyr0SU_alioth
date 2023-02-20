@@ -48,6 +48,8 @@ jobs:
         echo "GCC_ARM_DIR=$GITHUB_WORKSPACE/arm-gnu-toolchain-12.2.rel1-x86_64-arm-none-linux-gnueabihf/bin" >> $GITHUB_ENV
         echo "ZIMAGE_DIR=$GITHUB_WORKSPACE/android-kernel/out/arch/arm64/boot" >> $GITHUB_ENV
         echo "ANYKERNEL_DIR=$GITHUB_WORKSPACE/anykernel/anykernel" >> $GITHUB_ENV
+        export ARCH=arm64
+        export SUBARCH=arm64
         TIME=$(TZ=America/Mexico_City date "+%Y%m%d%H%M")
         DEVICE=alioth
         ZIPNAME=Kyr0SU
