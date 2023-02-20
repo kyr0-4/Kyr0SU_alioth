@@ -57,8 +57,8 @@ jobs:
         TIME=$(TZ=America/Mexico_City date "+%Y%m%d%H%M")
         DEVICE=alioth
         ZIPNAME=Kyr0SU
-        echo "FINAL_ZIP=${ZIPNAME}-${DEVICE}-KERNEL-AOSP-${TIME}" >> $GITHUB_ENV
-        sed -i 's/CONFIG_LOCALVERSION="-N0kernel"/CONFIG_LOCALVERSION="-Kyr0SU"/g' "android-kernel/arch/arm64/configs/vendor/alioth_defconfig"
+        echo "FINAL_ZIP=${ZIPNAME}-N0kernel-${DEVICE}-KERNEL-AOSP-${TIME}" >> $GITHUB_ENV
+        sed -i 's/CONFIG_LOCALVERSION="-N0kernel"/CONFIG_LOCALVERSION="-Kyr0SU-N0kernel"/g' "android-kernel/arch/arm64/configs/vendor/alioth_defconfig"
 
     - name: Fix:Makefile:Properly disable Unknown Warning Option
       run: |
