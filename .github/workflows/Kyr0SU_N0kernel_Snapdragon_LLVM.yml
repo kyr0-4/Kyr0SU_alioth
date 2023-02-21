@@ -2,7 +2,7 @@ name: kyr0SU for Alioth (N0kernel_kernel+KernelSU+Snapdragon LLVM 16.0.3)
 
 on: 
   schedule:
-    - cron:  '20 22 * * 1,3,5'
+    - cron:  '0 8 * * *'
   workflow_dispatch:
 
   
