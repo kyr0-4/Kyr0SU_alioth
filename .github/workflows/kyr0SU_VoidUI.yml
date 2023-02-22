@@ -1,0 +1,125 @@
+name: kyr0SU for Alioth (VoidUI_kernel+KernelSU+Snapdragon LLVM 16.0.3)
+
+on: 
+  schedule:
+    - cron:  '0 8 * * *'
+  workflow_dispatch:
+
+  
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Setup build kernel environment
+      run: |
+        sudo apt-get update
+        sudo apt-get install libncurses-dev libtinfo5 git ccache automake flex lzop bison gperf build-essential zip curl zlib1g-dev g++-multilib libxml2-utils bzip2 libbz2-dev libbz2-1.0 libghc-bzlib-dev squashfs-tools pngcrush schedtool dpkg-dev liblz4-tool make optipng maven libssl-dev pwgen libswitch-perl policycoreutils minicom libxml-sax-base-perl libxml-simple-perl bc libc6-dev libc6-dev-i386 lib32ncurses5-dev libx11-dev lib32z-dev libgl1-mesa-dev xsltproc unzip device-tree-compiler python2 python3
+    
+    - name: Checkout Kernel Source Code
+      uses: actions/checkout@v3
+      with:
+        github-server-url: 'https://github.com'
+        repository: VoidUI-Devices/kernel_xiaomi_sm8250
+        ref: aosp-13
+        path: android-kernel
+        
+    - name: Checkout AnyKernel
+      uses: actions/checkout@v3
+      with:
+        github-server-url: 'https://github.com'
+        repository: kyr0-4/kyr0SU
+        ref: main
+        path: anykernel
+        
+    - name: Checkout aarch64-zyc-linux-gnu
+      uses: actions/checkout@v3
+      with:
+        github-server-url: 'https://github.com'
+        repository: ZyCromerZ/aarch64-zyc-linux-gnu
+        ref: 13
+        path: aarch64-zyc-linux-gnu
+
+    - name: Download Compiler - Snapdragon LLVM
+      run: |
+        git clone --depth=1 --branch aosp-13 https://gitlab.com/VoidUI/snapdragon-clang.git
+    
+    - name: Variables
+      run: |
+        echo "KERNEL_DIR=$GITHUB_WORKSPACE/android-kernel" >> $GITHUB_ENV
+        echo "CLANG_DIR=$GITHUB_WORKSPACE/snapdragon-clang/bin" >> $GITHUB_ENV
+        echo "ZyC_DIR=$GITHUB_WORKSPACE/aarch64-zyc-linux-gnu/bin" >> $GITHUB_ENV
+        echo "ZIMAGE_DIR=$GITHUB_WORKSPACE/android-kernel/out/arch/arm64/boot" >> $GITHUB_ENV
+        echo "ANYKERNEL_DIR=$GITHUB_WORKSPACE/anykernel/anykernel" >> $GITHUB_ENV
+        TIME=$(TZ=America/Mexico_City date "+%Y%m%d%H%M")
+        LOCALVERSION_LINE=$(grep "CONFIG_LOCALVERSION=" android-kernel/arch/arm64/configs/alioth_defconfig)
+        LOCALVERSION_NEW='CONFIG_LOCALVERSION="-Kyr0SU-VoidUI"'
+        DEVICE=alioth
+        ZIPNAME=Kyr0SU
+        echo "FINAL_ZIP=${ZIPNAME}-VoidUI-${DEVICE}-KERNEL-AOSP-${TIME}" >> $GITHUB_ENV
+        sed -i "s/$LOCALVERSION_LINE/$LOCALVERSION_NEW/g" android-kernel/arch/arm64/configs/alioth_defconfig
+    
+    - name: Apply KernelSU
+      run: |
+        cd android-kernel
+        curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -
+        wget -q "https://raw.githubusercontent.com/CHIZI-0618/RK-KernelSU_Action/main/KernelSU.patch" -O KernelSU.patch
+        git apply ./KernelSU.patch
+    
+    - name: Build kernel
+      run: |
+        cd android-kernel
+        KERNEL_DEFCONFIG=alioth_defconfig
+        ARCH=arm64
+        SUBARCH=arm64
+        make O=out clean
+        make O=out ARCH=arm64 CC=${{ env.CLANG_DIR }}/clang $KERNEL_DEFCONFIG
+        make -j$(nproc --all) \
+                      O=out \
+                      ARCH=arm64 \
+                      CC=${{ env.CLANG_DIR }}/clang \
+                      CROSS_COMPILE=${{ env.ZyC_DIR }}/aarch64-zyc-linux-gnu- \
+                      LD=${{ env.CLANG_DIR }}/ld.lld \
+                      AR=${{ env.CLANG_DIR }}/llvm-ar \
+                      NM=${{ env.CLANG_DIR }}/llvm-nm \
+                      STRIP=${{ env.CLANG_DIR }}/llvm-strip \
+                      OBJCOPY=${{ env.CLANG_DIR }}/llvm-objcopy \
+                      OBJDUMP=${{ env.CLANG_DIR }}/llvm-objdump \
+                      READELF=${{ env.CLANG_DIR }}/llvm-readelf \
+                      LLVM=1 \
+                      LLVM_IAS=1 \
+                      HOSTCFLAGS="-fuse-ld=lld -Wno-unused-command-line-argument"
+    
+    - name: generate dtb
+      run: |
+        find ${{ env.KERNEL_DIR }}/out/arch/arm64/boot/dts/vendor/qcom -name '*.dtb' -exec cat {} + >${{ env.KERNEL_DIR }}/out/arch/arm64/boot/dtb
+    
+    - name: Upload the kernel image
+      uses: actions/upload-artifact@v3
+      with:
+        name: Image
+        path: ${{ env.ZIMAGE_DIR }}/Image
+
+    - name: Upload DTBO image
+      uses: actions/upload-artifact@v3
+      with:
+        name: dtbo
+        path: ${{ env.ZIMAGE_DIR }}/dtbo.img
+
+    - name: Upload DTB image
+      uses: actions/upload-artifact@v3
+      with:
+        name: dtb
+        path: ${{ env.ZIMAGE_DIR }}/dtb
+
+    - name: Make Anykernel for the kernel
+      run: |
+        cp -fp ${{ env.ZIMAGE_DIR }}/Image ${{ env.ANYKERNEL_DIR }}
+        cp -fp ${{ env.ZIMAGE_DIR }}/dtbo.img ${{ env.ANYKERNEL_DIR }}
+        cp -fp ${{ env.ZIMAGE_DIR }}/dtb ${{ env.ANYKERNEL_DIR }}
+        
+    - name: Upload AnyKernel zip
+      uses: actions/upload-artifact@v3
+      with:
+        name: ${{ env.FINAL_ZIP}}
+        path: ${{ env.ANYKERNEL_DIR }}
