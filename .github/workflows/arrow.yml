@@ -97,7 +97,7 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: Image.gz
-        path: ${{ env.ZIMAGE_DIR }}/Image.gz
+        path: ${{ env.ZIMAGE_DIR }}/Image
 
     - name: Upload DTBO image
       uses: actions/upload-artifact@v3
@@ -113,7 +113,7 @@ jobs:
 
     - name: Make Anykernel for the kernel
       run: |
-        cp -fp ${{ env.ZIMAGE_DIR }}/Image.gz ${{ env.ANYKERNEL_DIR }}
+        cp -fp ${{ env.ZIMAGE_DIR }}/Image ${{ env.ANYKERNEL_DIR }}
         cp -fp ${{ env.ZIMAGE_DIR }}/dtbo.img ${{ env.ANYKERNEL_DIR }}
         cp -fp ${{ env.ZIMAGE_DIR }}/dtb ${{ env.ANYKERNEL_DIR }}
         
