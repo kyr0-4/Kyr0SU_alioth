@@ -15,7 +15,6 @@ jobs:
       CCACHE_NOHASHDIR: "true"
       CCACHE_HARDLINK: "true"
     steps:
-	
     - name: Set swap to 10G
       uses: pierotofy/set-swap-space@master
       with:
