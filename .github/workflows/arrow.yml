@@ -1,15 +1,23 @@
 name: Kernel kyr0SU for Alioth (arrowl_kernel+KernelSU+ZyC Clang)
 
 on: 
-  schedule:
-    - cron:  '0 8 * * *'
+
   workflow_dispatch:
 
   
 jobs:
   build:
     runs-on: ubuntu-latest
+	env:
+      CCACHE_COMPILERCHECK: "%compiler% -dumpmachine; %compiler% -dumpversion"
+      CCACHE_NOHASHDIR: "true"
+      CCACHE_HARDLINK: "true"
     steps:
+	
+    - name: Set swap to 10G
+      uses: pierotofy/set-swap-space@master
+      with:
+        swap-size-gb: 10
 
     - name: Setup build kernel environment
       run: |
@@ -23,26 +31,16 @@ jobs:
         repository: ArrowOS-MiPa-Edition/android_kernel_xiaomi_alioth
         ref: arrow-13.1
         path: android-kernel
-        
-    - name: Checkout AnyKernel
-      uses: actions/checkout@v3
-      with:
-        github-server-url: 'https://github.com'
-        repository: kyr0-4/kyr0SU
-        ref: main
-        path: anykernel
-
-    - name: Download Compiler - ZyCromerZ
+		
+    - name: Apply KernelSU
       run: |
-        mkdir clang
-        wget https://raw.githubusercontent.com/ZyCromerZ/Clang/main/Clang-main-link.txt
-        LINK=$(cat 'Clang-main-link.txt')
-        wget -q ${LINK} -O clang.tar.gz
-        tar -C clang/ -zxf clang.tar.gz
-
+        cd android-kernel
+        curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -s ${{ env.KERNELSU_TAG }}
+		
     - name: Variables
       run: |
         echo "KERNEL_DIR=$GITHUB_WORKSPACE/android-kernel" >> $GITHUB_ENV
+		echo "KERNEL_CONFIG=$GITHUB_WORKSPACE/android-kernel/arch/arm64/configs/vendor/arrow_alioth_defconfig >> $GITHUB_ENV
         echo "CLANG_DIR=$GITHUB_WORKSPACE/clang/bin" >> $GITHUB_ENV
         echo "GCC_ARM64_DIR=$GITHUB_WORKSPACE/arm-gnu-toolchain-12.2.rel1-x86_64-aarch64-none-linux-gnu/bin" >> $GITHUB_ENV
         echo "GCC_ARM_DIR=$GITHUB_WORKSPACE/arm-gnu-toolchain-12.2.rel1-x86_64-arm-none-linux-gnueabihf/bin" >> $GITHUB_ENV
@@ -54,13 +52,29 @@ jobs:
         DEVICE=alioth
         ZIPNAME=Kyr0SU
         echo "FINAL_ZIP=${ZIPNAME}-arrow-${DEVICE}-KERNEL-AOSP-${TIME}" >> $GITHUB_ENV
-
-    - name: Apply KernelSU
+		
+    - name: Setup Configuration for Kernel
       run: |
-        cd android-kernel
-        curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -
-        wget -q "https://raw.githubusercontent.com/kyr0-4/Kyr0SU_alioth/main/zer0.patch" -O zer0.patch
-        git apply ./zer0.patch
+        cd $GITHUB_WORKSPACE/android-kernel
+            echo "CONFIG_MODULES=y" >> ${{ env.KERNEL_CONFIG }}
+            echo "CONFIG_KPROBES=y" >> ${{ env.KERNEL_CONFIG }}
+            echo "CONFIG_HAVE_KPROBES=y" >> ${{ env.KERNEL_CONFIG }}
+            echo "CONFIG_KPROBE_EVENTS=y" >> ${{ env.KERNEL_CONFIG }}
+			
+    - name: Setup ccache
+      if: env.ENABLE_CCACHE == 'true'
+      uses: hendrikmuhs/ccache-action@v1.2
+      with:
+        key: build-kernel-${{ env.DEVICE }}${{ env.UPLOADNAME }}
+        max-size: 2G
+
+    - name: Download Compiler - ZyCromerZ
+      run: |
+        mkdir clang
+        wget https://raw.githubusercontent.com/ZyCromerZ/Clang/main/Clang-main-link.txt
+        LINK=$(cat 'Clang-main-link.txt')
+        wget -q ${LINK} -O clang.tar.gz
+        tar -C clang/ -zxf clang.tar.gz
 
     - name: Build kernel
       run: |
@@ -112,6 +126,14 @@ jobs:
       with:
         name: dtb
         path: ${{ env.ZIMAGE_DIR }}/dtb
+		
+    - name: Checkout AnyKernel
+      uses: actions/checkout@v3
+      with:
+        github-server-url: 'https://github.com'
+        repository: kyr0-4/kyr0SU
+        ref: main
+        path: anykernel
 
     - name: Make Anykernel for the kernel
       run: |
