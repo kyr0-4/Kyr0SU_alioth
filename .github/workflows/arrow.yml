@@ -32,12 +32,12 @@ jobs:
         repository: ArrowOS-MiPa-Edition/android_kernel_xiaomi_alioth
         ref: arrow-13.1
         path: android-kernel
-		
+
     - name: Apply KernelSU
       run: |
         cd android-kernel
         curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -s ${{ env.KERNELSU_TAG }}
-		
+
     - name: Variables
       run: |
         echo "KERNEL_DIR=$GITHUB_WORKSPACE/android-kernel" >> $GITHUB_ENV
@@ -53,7 +53,7 @@ jobs:
         DEVICE=alioth
         ZIPNAME=Kyr0SU
         echo "FINAL_ZIP=${ZIPNAME}-arrow-${DEVICE}-KERNEL-AOSP-${TIME}" >> $GITHUB_ENV
-		
+
     - name: Setup Configuration for Kernel
       run: |
         cd $GITHUB_WORKSPACE/android-kernel
@@ -61,7 +61,7 @@ jobs:
             echo "CONFIG_KPROBES=y" >> ${{ env.KERNEL_CONFIG }}
             echo "CONFIG_HAVE_KPROBES=y" >> ${{ env.KERNEL_CONFIG }}
             echo "CONFIG_KPROBE_EVENTS=y" >> ${{ env.KERNEL_CONFIG }}
-			
+
     - name: Setup ccache
       if: env.ENABLE_CCACHE == 'true'
       uses: hendrikmuhs/ccache-action@v1.2
@@ -127,7 +127,7 @@ jobs:
       with:
         name: dtb
         path: ${{ env.ZIMAGE_DIR }}/dtb
-		
+
     - name: Checkout AnyKernel
       uses: actions/checkout@v3
       with:
@@ -141,7 +141,7 @@ jobs:
         cp -fp ${{ env.ZIMAGE_DIR }}/Image ${{ env.ANYKERNEL_DIR }}
         cp -fp ${{ env.ZIMAGE_DIR }}/dtbo.img ${{ env.ANYKERNEL_DIR }}
         cp -fp ${{ env.ZIMAGE_DIR }}/dtb ${{ env.ANYKERNEL_DIR }}
-        
+
     - name: Upload AnyKernel zip
       uses: actions/upload-artifact@v3
       with:
