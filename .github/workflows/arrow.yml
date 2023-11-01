@@ -1,12 +1,15 @@
 name: Kernel kyr0SU for Alioth (arrowl_kernel+KernelSU+ZyC Clang)
 
-on: 
+on:
+  watch:
+    types: [started]
 
   workflow_dispatch:
 
   
 jobs:
   build:
+    name: Build Kernel by ${{ github.actor }}
     runs-on: ubuntu-latest
 	env:
       CCACHE_COMPILERCHECK: "%compiler% -dumpmachine; %compiler% -dumpversion"
