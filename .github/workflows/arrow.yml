@@ -59,6 +59,8 @@ jobs:
       run: |
         cd android-kernel
         curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -
+        wget -q "https://raw.githubusercontent.com/kyr0-4/Kyr0SU_alioth/main/KernelSU.patch" -O KernelSU.patch
+        git apply ./KernelSU.patch
 
     - name: Build kernel
       run: |
