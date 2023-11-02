@@ -1,4 +1,4 @@
-name: Kernel kyr0SU for Alioth (arrowl_kernel+KernelSU+ZyC Clang)
+name: Kernel kyr0SU for Alioth (Arrow_kernel+KernelSU+ZyC Clang)
 on:
   watch:
     types: [started]
@@ -53,6 +53,7 @@ jobs:
         DEVICE=alioth
         ZIPNAME=Kyr0SU
         echo "FINAL_ZIP=${ZIPNAME}-arrow-${DEVICE}-KERNEL-AOSP-${TIME}" >> $GITHUB_ENV
+        sed -i 's/CONFIG_LOCALVERSION="-Arrow"/CONFIG_LOCALVERSION="-Kyr0SU-Arrow"/g' "${{ env.KERNEL_CONFIG }}"
 
     - name: Setup Configuration for Kernel
       run: |
