@@ -53,7 +53,7 @@ jobs:
         DEVICE=alioth
         ZIPNAME=Kyr0SU
         echo "FINAL_ZIP=${ZIPNAME}-arrow-${DEVICE}-KERNEL-AOSP-${TIME}" >> $GITHUB_ENV
-        sed -i 's/CONFIG_LOCALVERSION="-Arrow"/CONFIG_LOCALVERSION="-Kyr0SU-Arrow"/g' "${{ env.KERNEL_CONFIG }}"
+        sed -i 's/CONFIG_LOCALVERSION="-Arrow"/CONFIG_LOCALVERSION="-Kyr0SU-Arrow"/g' "android-kernel/arch/arm64/configs/vendor/arrow_alioth_defconfig"
 
     - name: Setup Configuration for Kernel
       run: |
