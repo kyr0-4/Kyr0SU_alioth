@@ -30,7 +30,7 @@ jobs:
       with:
         github-server-url: 'https://github.com'
         repository: ArrowOS-MiPa-Edition/android_kernel_xiaomi_alioth
-        ref: arrow-13.1
+        ref: staging-2.0/arrow-13.1
         path: android-kernel
 
     - name: Apply KernelSU
