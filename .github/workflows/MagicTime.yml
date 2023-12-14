@@ -1,4 +1,4 @@
-name: Kernel kyr0SU for Alioth (MagicTime+KernelSU+ZyC Clang)
+name: Kernel kyr0SU for Alioth (Arrow_kernel+KernelSU+ZyC Clang)
 on:
   watch:
     types: [started]
@@ -37,7 +37,7 @@ jobs:
       run: |
         cd android-kernel
         curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -s ${{ env.KERNELSU_TAG }}
-	
+
     - name: Variables
       run: |
         echo "KERNEL_DIR=$GITHUB_WORKSPACE/android-kernel" >> $GITHUB_ENV
@@ -52,7 +52,7 @@ jobs:
         TIME=$(TZ=America/Mexico_City date "+%Y%m%d%H%M")
         DEVICE=alioth
         ZIPNAME=Kyr0SU
-        echo "FINAL_ZIP=${ZIPNAME}-arrow-${DEVICE}-KERNEL-AOSP-${TIME}" >> $GITHUB_ENV
+        echo "FINAL_ZIP=${ZIPNAME}-MagicTime-${DEVICE}-KERNEL-AOSP-${TIME}" >> $GITHUB_ENV
         sed -i 's/CONFIG_LOCALVERSION="-MagicTime"/CONFIG_LOCALVERSION="-Kyr0SU-MagicTime"/g' "android-kernel/arch/arm64/configs/vendor/xiaomi/sm8250-common.config"
 
     - name: Setup Configuration for Kernel
@@ -62,7 +62,7 @@ jobs:
             echo "CONFIG_KPROBES=y" >> ${{ env.KERNEL_CONFIG }}
             echo "CONFIG_HAVE_KPROBES=y" >> ${{ env.KERNEL_CONFIG }}
             echo "CONFIG_KPROBE_EVENTS=y" >> ${{ env.KERNEL_CONFIG }}
-	    
+
     - name: Setup ccache
       if: env.ENABLE_CCACHE == 'true'
       uses: hendrikmuhs/ccache-action@v1.2
