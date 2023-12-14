@@ -1,4 +1,4 @@
-name: Kernel kyr0SU for Alioth (Arrow_kernel+KernelSU+ZyC Clang)
+name: Kernel kyr0SU for Alioth (MagicTime_kernel+KernelSU+ZyC Clang)
 on:
   watch:
     types: [started]
