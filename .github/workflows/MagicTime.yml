@@ -107,7 +107,7 @@ jobs:
                       HOSTAR=${{ env.CLANG_DIR }}/llvm-ar \
                       HOSTLD=${{ env.CLANG_DIR }}/ld.lld \
                       LLVM=1 \
-                      LLVM_IAS=1
+                      LLVM_IAS=1 \
                       $KERNEL_DEFCONFIG
           make -j$(nproc --all) \
                       O=out \
@@ -128,7 +128,7 @@ jobs:
                       HOSTAR=${{ env.CLANG_DIR }}/llvm-ar \
                       HOSTLD=${{ env.CLANG_DIR }}/ld.lld \
                       LLVM=1 \
-                      LLVM_IAS=1
+                      LLVM_IAS=1 \
                       $sm8250_DEFCONFIG
           make -j$(nproc --all) \
                       O=out \
@@ -149,7 +149,7 @@ jobs:
                       HOSTAR=${{ env.CLANG_DIR }}/llvm-ar \
                       HOSTLD=${{ env.CLANG_DIR }}/ld.lld \
                       LLVM=1 \
-                      LLVM_IAS=1
+                      LLVM_IAS=1 \
                       $alioth_DEFCONFIG
                       
 
