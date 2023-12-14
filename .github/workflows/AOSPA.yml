@@ -1,4 +1,4 @@
-name: Kernel kyr0SU for Alioth (MagicTime_kernel+KernelSU+ZyC Clang)
+name: Kernel kyr0SU for Alioth (AOSPA_kernel+KernelSU+ZyC Clang)
 on:
   watch:
     types: [started]
@@ -29,14 +29,19 @@ jobs:
       uses: actions/checkout@v3
       with:
         github-server-url: 'https://github.com'
-        repository: TIMISONG-dev/kernel_xiaomi_sm8250
-        ref: magictime
+        repository: AOSPA/android_kernel_xiaomi_sm8250
+        ref: uvite
         path: android-kernel
+
+    - name: Apply KernelSU
+      run: |
+        cd android-kernel
+        curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -s
 
     - name: Variables
       run: |
         echo "KERNEL_DIR=$GITHUB_WORKSPACE/android-kernel" >> $GITHUB_ENV
-        echo "KERNEL_CONFIG=$GITHUB_WORKSPACE/android-kernel/arch/arm64/configs/vendor/kona-perf_defconfig" >> $GITHUB_ENV
+        echo "KERNEL_CONFIG=$GITHUB_WORKSPACE/android-kernel/arch/arm64/configs/vendor/alioth_defconfig" >> $GITHUB_ENV
         echo "CLANG_DIR=$GITHUB_WORKSPACE/clang/bin" >> $GITHUB_ENV
         echo "GCC_ARM64_DIR=$GITHUB_WORKSPACE/arm-gnu-toolchain-12.2.rel1-x86_64-aarch64-none-linux-gnu/bin" >> $GITHUB_ENV
         echo "GCC_ARM_DIR=$GITHUB_WORKSPACE/arm-gnu-toolchain-12.2.rel1-x86_64-arm-none-linux-gnueabihf/bin" >> $GITHUB_ENV
@@ -47,8 +52,16 @@ jobs:
         TIME=$(TZ=America/Mexico_City date "+%Y%m%d%H%M")
         DEVICE=alioth
         ZIPNAME=Kyr0SU
-        echo "FINAL_ZIP=${ZIPNAME}-MagicTime-${DEVICE}-KERNEL-AOSP-${TIME}" >> $GITHUB_ENV
-        sed -i 's/CONFIG_LOCALVERSION="-MagicTime"/CONFIG_LOCALVERSION="-Kyr0SU-MagicTime"/g' "android-kernel/arch/arm64/configs/vendor/xiaomi/sm8250-common.config"
+        echo "FINAL_ZIP=${ZIPNAME}-Uvite-${DEVICE}-KERNEL-AOSP-${TIME}" >> $GITHUB_ENV
+        sed -i 's/CONFIG_LOCALVERSION="-Uvite"/CONFIG_LOCALVERSION="-Kyr0SU-Uvite"/g' "android-kernel/arch/arm64/configs/vendor/alioth_defconfig"
+
+    - name: Setup Configuration for Kernel
+      run: |
+        cd $GITHUB_WORKSPACE/android-kernel
+            echo "CONFIG_MODULES=y" >> ${{ env.KERNEL_CONFIG }}
+            echo "CONFIG_KPROBES=y" >> ${{ env.KERNEL_CONFIG }}
+            echo "CONFIG_HAVE_KPROBES=y" >> ${{ env.KERNEL_CONFIG }}
+            echo "CONFIG_KPROBE_EVENTS=y" >> ${{ env.KERNEL_CONFIG }}
 
     - name: Setup ccache
       if: env.ENABLE_CCACHE == 'true'
@@ -68,9 +81,7 @@ jobs:
     - name: Build kernel
       run: |
         cd android-kernel
-        KERNEL_DEFCONFIG=vendor/kona-perf_defconfig
-        sm8250_DEFCONFIG=vendor/xiaomi/sm8250-common.config
-        alioth_DEFCONFIG=vendor/xiaomi/alioth.config
+        KERNEL_DEFCONFIG=vendor/alioth_defconfig
         ARCH=arm64
         SUBARCH=arm64
         make O=out clean
@@ -94,51 +105,7 @@ jobs:
                       HOSTAR=${{ env.CLANG_DIR }}/llvm-ar \
                       HOSTLD=${{ env.CLANG_DIR }}/ld.lld \
                       LLVM=1 \
-                      LLVM_IAS=1 \
-                      $KERNEL_DEFCONFIG
-          make -j$(nproc --all) \
-                      O=out \
-                      ARCH=arm64 \
-                      CC=${{ env.CLANG_DIR }}/clang \
-                      CLANG_TRIPLE=${{ env.CLANG_DIR }}/aarch64-linux-gnu- \
-                      CROSS_COMPILE=${{ env.CLANG_DIR }}/aarch64-linux-gnu- \
-                      CROSS_COMPILE_COMPAT=${{ env.CLANG_DIR }}/arm-linux-gnueabi- \
-                      LD=${{ env.CLANG_DIR }}/ld.lld \
-                      AR=${{ env.CLANG_DIR }}/llvm-ar \
-                      NM=${{ env.CLANG_DIR }}/llvm-nm \
-                      STRIP=${{ env.CLANG_DIR }}/llvm-strip \
-                      OBJCOPY=${{ env.CLANG_DIR }}/llvm-objcopy \
-                      OBJDUMP=${{ env.CLANG_DIR }}/llvm-objdump \
-                      READELF=${{ env.CLANG_DIR }}/llvm-readelf \
-                      HOSTCC=${{ env.CLANG_DIR }}/clang \
-                      HOSTCXX=${{ env.CLANG_DIR }}/clang++ \
-                      HOSTAR=${{ env.CLANG_DIR }}/llvm-ar \
-                      HOSTLD=${{ env.CLANG_DIR }}/ld.lld \
-                      LLVM=1 \
-                      LLVM_IAS=1 \
-                      $sm8250_DEFCONFIG
-          make -j$(nproc --all) \
-                      O=out \
-                      ARCH=arm64 \
-                      CC=${{ env.CLANG_DIR }}/clang \
-                      CLANG_TRIPLE=${{ env.CLANG_DIR }}/aarch64-linux-gnu- \
-                      CROSS_COMPILE=${{ env.CLANG_DIR }}/aarch64-linux-gnu- \
-                      CROSS_COMPILE_COMPAT=${{ env.CLANG_DIR }}/arm-linux-gnueabi- \
-                      LD=${{ env.CLANG_DIR }}/ld.lld \
-                      AR=${{ env.CLANG_DIR }}/llvm-ar \
-                      NM=${{ env.CLANG_DIR }}/llvm-nm \
-                      STRIP=${{ env.CLANG_DIR }}/llvm-strip \
-                      OBJCOPY=${{ env.CLANG_DIR }}/llvm-objcopy \
-                      OBJDUMP=${{ env.CLANG_DIR }}/llvm-objdump \
-                      READELF=${{ env.CLANG_DIR }}/llvm-readelf \
-                      HOSTCC=${{ env.CLANG_DIR }}/clang \
-                      HOSTCXX=${{ env.CLANG_DIR }}/clang++ \
-                      HOSTAR=${{ env.CLANG_DIR }}/llvm-ar \
-                      HOSTLD=${{ env.CLANG_DIR }}/ld.lld \
-                      LLVM=1 \
-                      LLVM_IAS=1 \
-                      $alioth_DEFCONFIG
-                      
+                      LLVM_IAS=1
 
     - name: generate dtb
       run: |
