@@ -33,11 +33,6 @@ jobs:
         ref: magictime
         path: android-kernel
 
-    - name: Apply KernelSU
-      run: |
-        cd android-kernel
-        curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -
-
     - name: Variables
       run: |
         echo "KERNEL_DIR=$GITHUB_WORKSPACE/android-kernel" >> $GITHUB_ENV
@@ -54,14 +49,6 @@ jobs:
         ZIPNAME=Kyr0SU
         echo "FINAL_ZIP=${ZIPNAME}-MagicTime-${DEVICE}-KERNEL-AOSP-${TIME}" >> $GITHUB_ENV
         sed -i 's/CONFIG_LOCALVERSION="-MagicTime"/CONFIG_LOCALVERSION="-Kyr0SU-MagicTime"/g' "android-kernel/arch/arm64/configs/vendor/xiaomi/sm8250-common.config"
-
-    - name: Setup Configuration for Kernel
-      run: |
-        cd $GITHUB_WORKSPACE/android-kernel
-            echo "CONFIG_MODULES=y" >> ${{ env.KERNEL_CONFIG }}
-            echo "CONFIG_KPROBES=y" >> ${{ env.KERNEL_CONFIG }}
-            echo "CONFIG_HAVE_KPROBES=y" >> ${{ env.KERNEL_CONFIG }}
-            echo "CONFIG_KPROBE_EVENTS=y" >> ${{ env.KERNEL_CONFIG }}
 
     - name: Setup ccache
       if: env.ENABLE_CCACHE == 'true'
