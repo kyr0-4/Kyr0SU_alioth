@@ -108,6 +108,50 @@ jobs:
                       HOSTLD=${{ env.CLANG_DIR }}/ld.lld \
                       LLVM=1 \
                       LLVM_IAS=1
+                      $KERNEL_DEFCONFIG
+          make -j$(nproc --all) \
+                      O=out \
+                      ARCH=arm64 \
+                      CC=${{ env.CLANG_DIR }}/clang \
+                      CLANG_TRIPLE=${{ env.CLANG_DIR }}/aarch64-linux-gnu- \
+                      CROSS_COMPILE=${{ env.CLANG_DIR }}/aarch64-linux-gnu- \
+                      CROSS_COMPILE_COMPAT=${{ env.CLANG_DIR }}/arm-linux-gnueabi- \
+                      LD=${{ env.CLANG_DIR }}/ld.lld \
+                      AR=${{ env.CLANG_DIR }}/llvm-ar \
+                      NM=${{ env.CLANG_DIR }}/llvm-nm \
+                      STRIP=${{ env.CLANG_DIR }}/llvm-strip \
+                      OBJCOPY=${{ env.CLANG_DIR }}/llvm-objcopy \
+                      OBJDUMP=${{ env.CLANG_DIR }}/llvm-objdump \
+                      READELF=${{ env.CLANG_DIR }}/llvm-readelf \
+                      HOSTCC=${{ env.CLANG_DIR }}/clang \
+                      HOSTCXX=${{ env.CLANG_DIR }}/clang++ \
+                      HOSTAR=${{ env.CLANG_DIR }}/llvm-ar \
+                      HOSTLD=${{ env.CLANG_DIR }}/ld.lld \
+                      LLVM=1 \
+                      LLVM_IAS=1
+                      $sm8250_DEFCONFIG
+          make -j$(nproc --all) \
+                      O=out \
+                      ARCH=arm64 \
+                      CC=${{ env.CLANG_DIR }}/clang \
+                      CLANG_TRIPLE=${{ env.CLANG_DIR }}/aarch64-linux-gnu- \
+                      CROSS_COMPILE=${{ env.CLANG_DIR }}/aarch64-linux-gnu- \
+                      CROSS_COMPILE_COMPAT=${{ env.CLANG_DIR }}/arm-linux-gnueabi- \
+                      LD=${{ env.CLANG_DIR }}/ld.lld \
+                      AR=${{ env.CLANG_DIR }}/llvm-ar \
+                      NM=${{ env.CLANG_DIR }}/llvm-nm \
+                      STRIP=${{ env.CLANG_DIR }}/llvm-strip \
+                      OBJCOPY=${{ env.CLANG_DIR }}/llvm-objcopy \
+                      OBJDUMP=${{ env.CLANG_DIR }}/llvm-objdump \
+                      READELF=${{ env.CLANG_DIR }}/llvm-readelf \
+                      HOSTCC=${{ env.CLANG_DIR }}/clang \
+                      HOSTCXX=${{ env.CLANG_DIR }}/clang++ \
+                      HOSTAR=${{ env.CLANG_DIR }}/llvm-ar \
+                      HOSTLD=${{ env.CLANG_DIR }}/ld.lld \
+                      LLVM=1 \
+                      LLVM_IAS=1
+                      $alioth_DEFCONFIG
+                      
 
     - name: generate dtb
       run: |
